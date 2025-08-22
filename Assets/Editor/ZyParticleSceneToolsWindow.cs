@@ -47,7 +47,7 @@ public static class ZyParticleSceneToolsWindow
         Handles.BeginGUI();
 
         // 定义一个在Scene视图左上角的矩形区域
-        GUILayout.BeginArea(new Rect(sv.position.width/2-125, 0, 260, 180));
+        GUILayout.BeginArea(new Rect(sv.position.width/2-125, 0, 280, 180));
         {
             // 绘制一个稍微透明的背景框
             GUI.color = new Color(1, 1, 1, 0.8f); // 80% 不透明度
@@ -57,22 +57,33 @@ public static class ZyParticleSceneToolsWindow
             GUILayout.BeginHorizontal();
             //if(listparticles.Count>0)
             //GUILayout.Label(listparticles[0].gameObject.name, EditorStyles.miniLabel);
-            EditorGUIUtility.labelWidth = 50;
-            pdelay = EditorGUILayout.FloatField("特效延迟", pdelay,GUILayout.Width(80));
-            if (GUILayout.Button(!isPlaying?"播放":"暂停")) 
+            EditorGUIUtility.labelWidth = 24;
+            if (GUILayout.Button("锁",new GUIStyle("Button") { normal=new GUIStyleState() { textColor= isLockSelect?Color.red:Color.green} },GUILayout.Width(22)))
+            {
+                isLockSelect = !isLockSelect;
+            }
+            pdelay = EditorGUILayout.FloatField("延迟", pdelay,GUILayout.Width(60));
+            if (GUILayout.Button(!isPlaying?"播放":"暂停",GUILayout.Width(40))) 
             {
                 isPlaying = !isPlaying;
                 tTemp = Time.realtimeSinceStartup;
             }
-            timeScale = EditorGUILayout.FloatField("时间流速", timeScale, GUILayout.Width(80));
+            GUILayout.FlexibleSpace();
+            
+            timeScale = EditorGUILayout.FloatField("流速", timeScale, GUILayout.Width(60));
             //if (listAnimator.Count > 0)
             //    GUILayout.Label(listAnimator[0].gameObject.name, EditorStyles.miniLabel);
             if (listAnimator.Count > 0)
-                clipName = EditorGUILayout.TextField(clipName,GUILayout.Width(50));
+                clipName = EditorGUILayout.TextField(clipName,GUILayout.Width(45));
+            if (GUILayout.Button("x", GUILayout.Width(22)))
+            {
+                isPlaying = false;
+                clearup();
+            }
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            t = GUILayout.HorizontalSlider(t, 0, duration, GUILayout.Width(200));
+            t = GUILayout.HorizontalSlider(t, 0, duration, GUILayout.Width(220));
             t = EditorGUILayout.FloatField((float)Math.Round(t, 2), new GUIStyle { fontSize = 10, contentOffset = new Vector2(0, 1), normal = new GUIStyleState() { textColor = Color.white } }, GUILayout.Width(20));
             //t = (float)Math.Round(t, 2);
             if (isPlaying)
@@ -97,6 +108,16 @@ public static class ZyParticleSceneToolsWindow
         Handles.EndGUI();
 
         testPlay();
+    }
+    static public void clearup() 
+    {
+        for (int i = 0; i < listparticles.Count; i++)
+        {
+            listparticles[i].Stop();
+            listparticles[i].Clear();
+        }
+        listparticles.Clear();       
+        listAnimator.Clear();
     }
     static public void testPlay()
     {
@@ -137,6 +158,7 @@ public static class ZyParticleSceneToolsWindow
     static private string clipName = "skill01";
 
     static private bool isPlaying = false;
+    static private bool isLockSelect = false;
 
 
 
@@ -144,6 +166,7 @@ public static class ZyParticleSceneToolsWindow
     static List<Animator> listAnimator = new List<Animator>();
     private static void GetSelectedComps()
     {
+        if (isLockSelect) return;
         GameObject[] gos = Selection.gameObjects;
         if (gos.Length <= 0) return;
         listparticles.Clear();
