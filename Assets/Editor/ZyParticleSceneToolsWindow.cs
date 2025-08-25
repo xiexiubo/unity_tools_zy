@@ -3,41 +3,97 @@ using UnityEditor;
 using System.Linq;
 using System.Collections.Generic;
 using System;
+using UnityEngine.Rendering;
+using Object = UnityEngine.Object;
+using UnityEngine.UIElements;
+
+public class ZyParticleSceneToolsWindow : EditorWindow
+{
+    static ZyParticleSceneToolsWindow instance;
+    [MenuItem("CommonTools/特效/场景特效面板")]
+    public static void ShowWindow()
+    {
+        instance = (ZyParticleSceneToolsWindow)EditorWindow.GetWindow(typeof(ZyParticleSceneToolsWindow));
+        Selection.selectionChanged += instance.Repaint;
+    }
+    private Vector2 offset = Vector2.zero;
+    private void OnGUI()
+    {
+        if (GUILayout.Button(ZyParticleSceneTools.IsShowPanel ? "关闭" : "打开",GUILayout.Height(45)))
+        {
+            ZyParticleSceneTools.IsShowPanel = !ZyParticleSceneTools.IsShowPanel;
+            if (ZyParticleSceneTools.IsShowPanel)
+            {
+                Debug.Log("已<color=#00FF00>打开</color>场景特效面板，选中的objs有特效就会显示！");
+            }
+            else
+            {
+                Debug.Log("已<color=#FF0000>关闭</color>场景特效面板！");
+            }
+
+        }
+        offset =  GUILayout.BeginScrollView(offset);
+
+
+        var listp = ZyParticleSceneTools.listparticles;
+        var lista = ZyParticleSceneTools.listAnimator;
+        if (listp.Count > 0)
+            GUILayout.Label("粒子");
+        for (int i = 0; i < listp.Count; i++)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(i.ToString(), "box");
+            EditorGUILayout.ObjectField(listp[i].gameObject, typeof(GameObject), true);
+            GUILayout.EndHorizontal();
+        }
+        if (lista.Count > 0)
+            GUILayout.Label("动画");
+        for (int i = 0; i < lista.Count; i++)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(i.ToString(), "box"); 
+            EditorGUILayout.ObjectField(lista[i].gameObject, typeof(GameObject), true);
+            GUILayout.EndHorizontal();
+        }
+
+        GUILayout.EndScrollView();
+    }
+}
 
 [InitializeOnLoad]
-public static class ZyParticleSceneToolsWindow
+public static class ZyParticleSceneTools
 {
     public static bool IsShowPanel = true;
     [MenuItem("CommonTools/特效/场景特效面板")]
     static public void ShowPanel()
     {
         IsShowPanel = !IsShowPanel;
-        if (IsShowPanel) 
+        if (IsShowPanel)
         {
             Debug.Log("已<color=#00FF00>打开</color>场景特效面板，选中的objs有特效就会显示！");
         }
-        else 
+        else
         {
             Debug.Log("已<color=#FF0000>关闭</color>场景特效面板！");
         }
     }
-    static ZyParticleSceneToolsWindow()
+    static ZyParticleSceneTools()
     {
         Debug.Log($"Unity编辑器启动完成，开始执行初始化操作...");
         // 注册启动时要执行的方法
-        SceneView.duringSceneGui += ZyParticleSceneToolsWindow.OnSceneGUI;
+        SceneView.duringSceneGui += ZyParticleSceneTools.OnSceneGUI;
         Selection.selectionChanged += GetSelectedComps;
 
     }
-    
+
     // 这是在Scene视图中绘制的核心方法
     public static void OnSceneGUI(SceneView sv)
     {
-        if (!IsShowPanel) 
+        if (!IsShowPanel)
         {
             return;
         }
-        if (listparticles.Count == 0 && listAnimator.Count == 0) 
+        if (listparticles.Count == 0 && listAnimator.Count == 0)
         {
             return;
         }
@@ -47,7 +103,7 @@ public static class ZyParticleSceneToolsWindow
         Handles.BeginGUI();
 
         // 定义一个在Scene视图左上角的矩形区域
-        GUILayout.BeginArea(new Rect(sv.position.width/2-125, 0, 280, 180));
+        GUILayout.BeginArea(new Rect(sv.position.width / 2 - 125, 0, 280, 180));
         {
             // 绘制一个稍微透明的背景框
             GUI.color = new Color(1, 1, 1, 0.8f); // 80% 不透明度
@@ -58,23 +114,23 @@ public static class ZyParticleSceneToolsWindow
             //if(listparticles.Count>0)
             //GUILayout.Label(listparticles[0].gameObject.name, EditorStyles.miniLabel);
             EditorGUIUtility.labelWidth = 24;
-            if (GUILayout.Button("锁",new GUIStyle("Button") { normal=new GUIStyleState() { textColor= isLockSelect?Color.red:Color.green} },GUILayout.Width(24)))
+            if (GUILayout.Button("锁", new GUIStyle("Button") { normal = new GUIStyleState() { textColor = isLockSelect ? Color.red : Color.green } }, GUILayout.Width(24)))
             {
                 isLockSelect = !isLockSelect;
             }
-            pdelay = EditorGUILayout.FloatField("延迟", pdelay,GUILayout.Width(60));
-            if (GUILayout.Button(!isPlaying?"播放":"暂停",GUILayout.Width(40))) 
+            pdelay = EditorGUILayout.FloatField("延迟", pdelay, GUILayout.Width(60));
+            if (GUILayout.Button(!isPlaying ? "播放" : "暂停", GUILayout.Width(40)))
             {
                 isPlaying = !isPlaying;
                 tTemp = Time.realtimeSinceStartup;
             }
             GUILayout.FlexibleSpace();
-            
+
             timeScale = EditorGUILayout.FloatField("流速", timeScale, GUILayout.Width(60));
             //if (listAnimator.Count > 0)
             //    GUILayout.Label(listAnimator[0].gameObject.name, EditorStyles.miniLabel);
             if (listAnimator.Count > 0)
-                clipName = EditorGUILayout.TextField(clipName,GUILayout.Width(45));
+                clipName = EditorGUILayout.TextField(clipName, GUILayout.Width(45));
             if (GUILayout.Button("x", GUILayout.Width(22)))
             {
                 isPlaying = false;
@@ -90,52 +146,55 @@ public static class ZyParticleSceneToolsWindow
             {
                 t = Time.realtimeSinceStartup - tTemp;
                 t = timeScale * t;
-                if (t > duration) 
+                if (t > duration)
                 {
                     tTemp = Time.realtimeSinceStartup;
                     t = 0;
                 }
             }
-            GUILayout.Label($"/", EditorStyles.miniLabel,GUILayout.Width(10));
-            duration = EditorGUILayout.FloatField(duration,new GUIStyle { fontSize=10,contentOffset =new Vector2(0,1),normal=new GUIStyleState() {textColor=Color.white } },GUILayout.Width(20));
+
+            GUILayout.Label($"/", EditorStyles.miniLabel, GUILayout.Width(10));
+            duration = EditorGUILayout.FloatField(duration, new GUIStyle { fontSize = 10, contentOffset = new Vector2(0, 1), normal = new GUIStyleState() { textColor = Color.white } }, GUILayout.Width(20));
             GUILayout.Label($"秒", EditorStyles.miniLabel);
             GUILayout.EndHorizontal();
 
             GUILayout.EndVertical();
         }
         GUILayout.EndArea();
-        Handles.EndGUI();
-
-        if (Math.Abs(t) >= 0.0001)
-            testPlay();
+        Handles.EndGUI();      
+     
     }
-    static public void clearup() 
+    static public void clearup_particle()
     {
         for (int i = 0; i < listparticles.Count; i++)
         {
             listparticles[i].Stop();
             listparticles[i].Clear();
-        }
-        listparticles.Clear();       
+        }       
+        t = 0;
+    }
+    static public void clearup()
+    {
+        clearup_particle();
+        listparticles.Clear();
         listAnimator.Clear();
         isLockSelect = false;
-        t = 0;
     }
     static public void testPlay()
     {
-        for (int i = 0; i < listparticles.Count; i++) 
+        for (int i = 0; i < listparticles.Count; i++)
         {
-            if (listparticles[i] == null) 
+            if (listparticles[i] == null)
             {
                 clearup();
                 return;
             }
             listparticles[i].Simulate(t - pdelay, false, true); // 模拟到目标帧之前的状态   
         }
-               
 
-         AnimationClip[] cs=null;
-        for (int i = 0; i < listAnimator.Count; i++) 
+
+        AnimationClip[] cs = null;
+        for (int i = 0; i < listAnimator.Count; i++)
         {
             var animator = listAnimator[i];
             cs = animator.runtimeAnimatorController.animationClips;
@@ -159,7 +218,22 @@ public static class ZyParticleSceneToolsWindow
         //Time.timeScale = 1f; // 重新启用时间流逝
 
     }
-    static public float t = 0; // 目标帧数（单位：秒）
+    // 目标帧数（单位：秒）
+    static public float _t=0;
+    static public float t
+    {
+        get { return _t; }
+        set
+        {
+            if (_t != value) 
+            {
+                _t = value;
+                testPlay();
+            }
+           
+        }
+    }
+
     static private float tTemp = -1f; // 目标帧数（单位：秒）
 
     static private float duration = 2f;
@@ -172,15 +246,14 @@ public static class ZyParticleSceneToolsWindow
 
 
 
-    static List<ParticleSystem> listparticles = new List<ParticleSystem>();
-    static List<Animator> listAnimator = new List<Animator>();
+    static public List<ParticleSystem> listparticles = new List<ParticleSystem>();
+    static public List<Animator> listAnimator = new List<Animator>();
     private static void GetSelectedComps()
     {
         if (isLockSelect) return;
         GameObject[] gos = Selection.gameObjects;
         if (gos.Length <= 0) return;
-        listparticles.Clear();
-        listAnimator.Clear();
+        clearup();
         for (int i = 0; i < gos.Length; i++)
         {
             var go = gos[i];
@@ -200,7 +273,7 @@ public static class ZyParticleSceneToolsWindow
             listAnimator.AddRange(animators);
         }
         //去掉随机
-        for (int i = 0;i < listparticles.Count;i++) 
+        for (int i = 0; i < listparticles.Count; i++)
         {
             var p = listparticles[i];
             if (!p) continue;
