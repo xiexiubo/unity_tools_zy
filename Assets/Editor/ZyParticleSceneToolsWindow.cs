@@ -58,7 +58,7 @@ public static class ZyParticleSceneToolsWindow
             //if(listparticles.Count>0)
             //GUILayout.Label(listparticles[0].gameObject.name, EditorStyles.miniLabel);
             EditorGUIUtility.labelWidth = 24;
-            if (GUILayout.Button("Ëø",new GUIStyle("Button") { normal=new GUIStyleState() { textColor= isLockSelect?Color.red:Color.green} },GUILayout.Width(22)))
+            if (GUILayout.Button("Ëø",new GUIStyle("Button") { normal=new GUIStyleState() { textColor= isLockSelect?Color.red:Color.green} },GUILayout.Width(24)))
             {
                 isLockSelect = !isLockSelect;
             }
