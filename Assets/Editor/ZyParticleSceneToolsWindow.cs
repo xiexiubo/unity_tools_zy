@@ -104,10 +104,10 @@ public static class ZyParticleSceneToolsWindow
             GUILayout.EndVertical();
         }
         GUILayout.EndArea();
-
         Handles.EndGUI();
 
-        testPlay();
+        if (Math.Abs(t) >= 0.0001)
+            testPlay();
     }
     static public void clearup() 
     {
@@ -118,11 +118,21 @@ public static class ZyParticleSceneToolsWindow
         }
         listparticles.Clear();       
         listAnimator.Clear();
+        isLockSelect = false;
+        t = 0;
     }
     static public void testPlay()
     {
-        for (int i = 0; i < listparticles.Count; i++)
-            listparticles[i].Simulate(t- pdelay, false, true); // 模拟到目标帧之前的状态       
+        for (int i = 0; i < listparticles.Count; i++) 
+        {
+            if (listparticles[i] == null) 
+            {
+                clearup();
+                return;
+            }
+            listparticles[i].Simulate(t - pdelay, false, true); // 模拟到目标帧之前的状态   
+        }
+               
 
          AnimationClip[] cs=null;
         for (int i = 0; i < listAnimator.Count; i++) 
